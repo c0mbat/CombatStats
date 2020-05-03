@@ -1,0 +1,8 @@
+{
+“name”: “combat-stats”,
+“version”: “0.9.0”,
+“description”: “R6S Stats Bot by @combat#7871”,
+“main”: “bot.py”,
+“author”: “Robin "Combat" Hugill”,
+“dependencies”: {}
+}
