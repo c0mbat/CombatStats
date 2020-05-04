@@ -1,6 +1,8 @@
 This bot is a work in progress.
 
 Stuff to do:
- - stats to work with different platforms
- - code to be re-written and organised
+ - stats to work with different platforms (done)
+ - code to be re-written and organised (not super necessary)
+ - add Asia stats
+ - add some more functionality
  
