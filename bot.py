@@ -12,6 +12,8 @@ client = commands.Bot(command_prefix = ';')
 @client.event
 async def on_ready():
     print("Bot user ready")
+    game = discord.Game(";commands for help.")
+    await client.change_presence(status=discord.Status.online, activity=game)
 
 @client.command()
 async def ping(ctx):
