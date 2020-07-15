@@ -5,6 +5,7 @@ import asyncio
 import r6sapi as api
 import math
 import random
+import datetime
 
 client = commands.Bot(command_prefix = ';')
 
@@ -21,65 +22,116 @@ async def ping(ctx):
     
 @client.command()
 async def commands(ctx):
-    embed=discord.Embed(title="Add me to your server!", url="https://stats.cm-bt.com", description="Click the link above.", color=0xff85e4)
+    embed=discord.Embed(title="Add me to your server!", url="http://stats.cm-bt.com", color=0xff85e4)
     embed.set_author(name="Commands for Combat Stats")
-    embed.add_field(name="Use my prefix `;` to call me", value="This prefix cannot yet be changed.", inline=False)
+    embed.add_field(name="My prefix is `;`", value="Use it to call me in the following commands.", inline=False)
     embed.add_field(name="To show PC stats, type:", value="`;pc <UPlay Name>`", inline=False)
     embed.add_field(name="To show Xbox stats, type:", value="`;xb <Xbox Gamertag>`", inline=False)
     embed.add_field(name="To show Playstation stats, type:", value="`;ps <PSN Name>`", inline=False)
+    embed.add_field(name="Add an operator to show operator stats!", value="For example: `;pc siege_player sledge`", inline=False)
     embed.set_footer(text="Combat Stats by @combat#7871")
     await ctx.send(embed=embed)
 
 @client.command()
-async def pc(ctx, username):
+async def pc(ctx, username, op="default"):
     async def run_general(player_batch):
         await player_batch.load_general()
         
+        if op == "default":
+            for player in player_batch:
+                ranks = await player_batch.get_rank(api.RankedRegions.EU)
+                rank = ranks[player.id]
+
+                ign = (player.name)
+                wins = (rank.wins)
+                losses = (rank.losses)
+                mmr = math.trunc(rank.mmr)
+                max_mmr = math.trunc(rank.max_mmr)
+                rank_name = (rank.rank)
+                iconurl = (rank.get_icon_url())
+                if losses == 0:
+                    winlossfull = wins / 1
+
+                else:
+                    winlossfull = wins / losses
+                winloss = round(winlossfull, 3)
+                
+                deaths = (player.deaths)
+                kills = (player.kills)
+                kd_full = kills / deaths
+                kd = round(kd_full, 3)
+                
+                
+                embed = discord.Embed(colour=discord.Colour(0xf400ff))
+
+                embed.set_thumbnail(url=(iconurl))
+                embed.set_author(name=""+(ign)+"\'s Stats on PC")
+                embed.set_footer(text="Combat Stats by @combat#7871")
+
+                embed.add_field(name="Total Kills", value=(kills), inline=True)
+                embed.add_field(name="Total Deaths", value=(deaths), inline=True)
+                embed.add_field(name="Total Kill / Death", value=(kd), inline=True)
+                embed.add_field(name="Ranked Wins", value=(wins), inline=True)
+                embed.add_field(name="Ranked Losses", value=(losses), inline=True)
+                embed.add_field(name="Ranked Win / Loss", value=(winloss), inline=True)
+                embed.add_field(name="Current MMR", value=(mmr), inline=True)
+                embed.add_field(name="Max MMR", value=(max_mmr), inline=True)
+                embed.add_field(name="Current Rank", value=(rank_name), inline=True)
+
+                await ctx.send(embed=embed)
+
+        else:
+            await player_batch.load_all_operators()
+            for player in player_batch:
+                oper = await player.get_operator(op)
+
+                ign = (player.name)
+                opname = (oper.name).title()
+                wins = (oper.wins)
+                losses = (oper.losses)
+                if losses == 0:
+                    winlossfull = wins / 1
+
+                else:
+                    winlossfull = wins / losses
+
+                winloss = round(winlossfull, 3)
+
+                kills = (oper.kills)
+                deaths = (oper.deaths)
+                if deaths == 0:
+                    killdeathfull = kills / 1
+
+                else:
+                    killdeathfull = kills / deaths
+
+                killdeath = round(killdeathfull, 3)
+                
+                time = str(datetime.timedelta(seconds=(oper.time_played)))
+                operator_badge = await auth.get_operator_badge(op)
+
+                embed = discord.Embed(colour=discord.Colour(0xf400ff))
+
+                embed.set_thumbnail(url=(operator_badge))
+                embed.set_author(name=""+(ign)+"\'s "+(opname)+" Stats on PC")
+                embed.set_footer(text="Combat Stats by @combat#7871")
+
+                embed.add_field(name="Wins", value=(wins), inline=True)
+                embed.add_field(name="Losses", value=(losses), inline=True)
+                embed.add_field(name="Win / Loss", value=(winloss), inline=True)
+                embed.add_field(name="Kills", value=(kills), inline=True)
+                embed.add_field(name="Deaths", value=(deaths), inline=True)
+                embed.add_field(name="Kill / Death", value=(killdeath), inline=True)
+                embed.add_field(name="Time Played (hh:mm:ss)", value=(time))
+
+                await ctx.send(embed=embed)
+                
+
         
         
-        for player in player_batch:
-            ranks = await player_batch.get_rank(api.RankedRegions.EU)
-            rank = ranks[player.id]
-
-
-            wins = (rank.wins)
-            losses = (rank.losses)
-            mmr = math.trunc(rank.mmr)
-            max_mmr = math.trunc(rank.max_mmr)
-            rank_name = (rank.rank)
-            iconurl = (rank.get_icon_url())
-            if losses == 0:
-                winlossfull = wins / 1
-
-            else:
-                winlossfull = wins / losses
-            winloss = round(winlossfull, 3)
-            
-            deaths = (player.deaths)
-            kills = (player.kills)
-            kd_full = kills / deaths
-            kd = round(kd_full, 3)
-            
-            
-            embed = discord.Embed(colour=discord.Colour(0xf400ff))
-
-            embed.set_thumbnail(url=(iconurl))
-            embed.set_author(name="EU Stats for "+(username))
-            embed.set_footer(text="Combat Stats Bot - @combat#7871")
-
-            embed.add_field(name="Total Kills", value=(kills), inline=True)
-            embed.add_field(name="Total Deaths", value=(deaths), inline=True)
-            embed.add_field(name="Total KD Ratio", value=(kd), inline=False)
-            embed.add_field(name="Ranked Wins", value=(wins), inline=True)
-            embed.add_field(name="Ranked Losses", value=(losses), inline=True)
-            embed.add_field(name="Ranked Win / Loss", value=(winloss), inline=True)
-            embed.add_field(name="Current MMR", value=(mmr), inline=True)
-            embed.add_field(name="Max MMR", value=(max_mmr), inline=True)
-            embed.add_field(name="Current Rank", value=(rank_name), inline=True)
-
-            await ctx.send(embed=embed)
-
+        
     async def run():
+        global auth
         auth = api.Auth("email", "password")
 
         player_batch = await auth.get_player_batch(names=[(username)], platform=api.Platforms.UPLAY)
@@ -92,55 +144,108 @@ async def pc(ctx, username):
         
     asyncio.get_event_loop().run_until_complete(run())
 
+
     
 @client.command()
-async def xb(ctx, username):
+async def xb(ctx, username, op="default"):
     async def run_general(player_batch):
         await player_batch.load_general()
         
+        if op == "default":
+            for player in player_batch:
+                ranks = await player_batch.get_rank(api.RankedRegions.EU)
+                rank = ranks[player.id]
 
-        for player in player_batch:
-            ranks = await player_batch.get_rank(api.RankedRegions.EU)
-            rank = ranks[player.id]
+                ign = (player.name)
+                wins = (rank.wins)
+                losses = (rank.losses)
+                mmr = math.trunc(rank.mmr)
+                max_mmr = math.trunc(rank.max_mmr)
+                rank_name = (rank.rank)
+                iconurl = (rank.get_icon_url())
+                if losses == 0:
+                    winlossfull = wins / 1
 
-            wins = (rank.wins)
-            losses = (rank.losses)
-            mmr = math.trunc(rank.mmr)
-            max_mmr = math.trunc(rank.max_mmr)
-            rank_name = (rank.rank)
-            iconurl = (rank.get_icon_url())
-            if losses == 0:
-                winlossfull = wins / 1
+                else:
+                    winlossfull = wins / losses
+                winloss = round(winlossfull, 3)
+                
+                deaths = (player.deaths)
+                kills = (player.kills)
+                kd_full = kills / deaths
+                kd = round(kd_full, 3)
+                
+                
+                embed = discord.Embed(colour=discord.Colour(0xf400ff))
 
-            else:
-                winlossfull = wins / losses
-            winloss = round(winlossfull, 3)
-            
-            deaths = (player.deaths)
-            kills = (player.kills)
-            kd_full = kills / deaths
-            kd = round(kd_full, 3)
-            
+                embed.set_thumbnail(url=(iconurl))
+                embed.set_author(name=""+(ign)+"\'s Stats on Xbox")
+                embed.set_footer(text="Combat Stats by @combat#7871")
 
-            embed = discord.Embed(colour=discord.Colour(0xf400ff))
+                embed.add_field(name="Total Kills", value=(kills), inline=True)
+                embed.add_field(name="Total Deaths", value=(deaths), inline=True)
+                embed.add_field(name="Total Kill / Death", value=(kd), inline=True)
+                embed.add_field(name="Ranked Wins", value=(wins), inline=True)
+                embed.add_field(name="Ranked Losses", value=(losses), inline=True)
+                embed.add_field(name="Ranked Win / Loss", value=(winloss), inline=True)
+                embed.add_field(name="Current MMR", value=(mmr), inline=True)
+                embed.add_field(name="Max MMR", value=(max_mmr), inline=True)
+                embed.add_field(name="Current Rank", value=(rank_name), inline=True)
 
-            embed.set_thumbnail(url=(iconurl))
-            embed.set_author(name="EU Xbox Stats for "+(username))
-            embed.set_footer(text="Combat Stats Bot - @combat#7871")
+                await ctx.send(embed=embed)
 
-            embed.add_field(name="Total Kills", value=(kills), inline=True)
-            embed.add_field(name="Total Deaths", value=(deaths), inline=True)
-            embed.add_field(name="Total KD Ratio", value=(kd), inline=False)
-            embed.add_field(name="Ranked Wins", value=(wins), inline=True)
-            embed.add_field(name="Ranked Losses", value=(losses), inline=True)
-            embed.add_field(name="Ranked Win / Loss", value=(winloss), inline=True)
-            embed.add_field(name="Current MMR", value=(mmr), inline=True)
-            embed.add_field(name="Max MMR", value=(max_mmr), inline=True)
-            embed.add_field(name="Current Rank", value=(rank_name), inline=True)
+        else:
+            await player_batch.load_all_operators()
+            for player in player_batch:
+                oper = await player.get_operator(op)
 
-            await ctx.send(embed=embed)
+                ign = (player.name)
+                opname = (oper.name).title()
+                wins = (oper.wins)
+                losses = (oper.losses)
+                if losses == 0:
+                    winlossfull = wins / 1
 
+                else:
+                    winlossfull = wins / losses
+
+                winloss = round(winlossfull, 3)
+
+                kills = (oper.kills)
+                deaths = (oper.deaths)
+                if deaths == 0:
+                    killdeathfull = kills / 1
+
+                else:
+                    killdeathfull = kills / deaths
+
+                killdeath = round(killdeathfull, 3)
+                
+                time = str(datetime.timedelta(seconds=(oper.time_played)))
+                operator_badge = await auth.get_operator_badge(op)
+
+                embed = discord.Embed(colour=discord.Colour(0xf400ff))
+
+                embed.set_thumbnail(url=(operator_badge))
+                embed.set_author(name=""+(ign)+"\'s "+(opname)+" Stats on Xbox")
+                embed.set_footer(text="Combat Stats by @combat#7871")
+
+                embed.add_field(name="Wins", value=(wins), inline=True)
+                embed.add_field(name="Losses", value=(losses), inline=True)
+                embed.add_field(name="Win / Loss", value=(winloss), inline=True)
+                embed.add_field(name="Kills", value=(kills), inline=True)
+                embed.add_field(name="Deaths", value=(deaths), inline=True)
+                embed.add_field(name="Kill / Death", value=(killdeath), inline=True)
+                embed.add_field(name="Time Played (hh:mm:ss)", value=(time))
+
+                await ctx.send(embed=embed)
+                
+
+        
+        
+        
     async def run():
+        global auth
         auth = api.Auth("email", "password")
 
         player_batch = await auth.get_player_batch(names=[(username)], platform=api.Platforms.XBOX)
@@ -153,54 +258,108 @@ async def xb(ctx, username):
         
     asyncio.get_event_loop().run_until_complete(run())
 
+
+    
 @client.command()
-async def ps(ctx, username):
+async def ps(ctx, username, op="default"):
     async def run_general(player_batch):
         await player_batch.load_general()
         
+        if op == "default":
+            for player in player_batch:
+                ranks = await player_batch.get_rank(api.RankedRegions.EU)
+                rank = ranks[player.id]
 
-        for player in player_batch:
-            ranks = await player_batch.get_rank(api.RankedRegions.EU)
-            rank = ranks[player.id]
+                ign = (player.name)
+                wins = (rank.wins)
+                losses = (rank.losses)
+                mmr = math.trunc(rank.mmr)
+                max_mmr = math.trunc(rank.max_mmr)
+                rank_name = (rank.rank)
+                iconurl = (rank.get_icon_url())
+                if losses == 0:
+                    winlossfull = wins / 1
 
-            wins = (rank.wins)
-            losses = (rank.losses)
-            mmr = math.trunc(rank.mmr)
-            max_mmr = math.trunc(rank.max_mmr)
-            rank_name = (rank.rank)
-            iconurl = (rank.get_icon_url())
-            if losses == 0:
-                winlossfull = wins / 1
+                else:
+                    winlossfull = wins / losses
+                winloss = round(winlossfull, 3)
+                
+                deaths = (player.deaths)
+                kills = (player.kills)
+                kd_full = kills / deaths
+                kd = round(kd_full, 3)
+                
+                
+                embed = discord.Embed(colour=discord.Colour(0xf400ff))
 
-            else:
-                winlossfull = wins / losses
-            winloss = round(winlossfull, 3)
-            
-            deaths = (player.deaths)
-            kills = (player.kills)
-            kd_full = kills / deaths
-            kd = round(kd_full, 3)
-            
+                embed.set_thumbnail(url=(iconurl))
+                embed.set_author(name=""+(ign)+"\'s Stats on Playstation")
+                embed.set_footer(text="Combat Stats by @combat#7871")
 
-            embed = discord.Embed(colour=discord.Colour(0xf400ff))
+                embed.add_field(name="Total Kills", value=(kills), inline=True)
+                embed.add_field(name="Total Deaths", value=(deaths), inline=True)
+                embed.add_field(name="Total Kill / Death", value=(kd), inline=True)
+                embed.add_field(name="Ranked Wins", value=(wins), inline=True)
+                embed.add_field(name="Ranked Losses", value=(losses), inline=True)
+                embed.add_field(name="Ranked Win / Loss", value=(winloss), inline=True)
+                embed.add_field(name="Current MMR", value=(mmr), inline=True)
+                embed.add_field(name="Max MMR", value=(max_mmr), inline=True)
+                embed.add_field(name="Current Rank", value=(rank_name), inline=True)
 
-            embed.set_thumbnail(url=(iconurl))
-            embed.set_author(name="EU Playstation Stats for "+(username))
-            embed.set_footer(text="Combat Stats Bot - @combat#7871")
+                await ctx.send(embed=embed)
 
-            embed.add_field(name="Total Kills", value=(kills), inline=True)
-            embed.add_field(name="Total Deaths", value=(deaths), inline=True)
-            embed.add_field(name="Total KD Ratio", value=(kd), inline=False)
-            embed.add_field(name="Ranked Wins", value=(wins), inline=True)
-            embed.add_field(name="Ranked Losses", value=(losses), inline=True)
-            embed.add_field(name="Ranked Win / Loss", value=(winloss), inline=True)
-            embed.add_field(name="Current MMR", value=(mmr), inline=True)
-            embed.add_field(name="Max MMR", value=(max_mmr), inline=True)
-            embed.add_field(name="Current Rank", value=(rank_name), inline=True)
+        else:
+            await player_batch.load_all_operators()
+            for player in player_batch:
+                oper = await player.get_operator(op)
 
-            await ctx.send(embed=embed)
+                ign = (player.name)
+                opname = (oper.name).title()
+                wins = (oper.wins)
+                losses = (oper.losses)
+                if losses == 0:
+                    winlossfull = wins / 1
 
+                else:
+                    winlossfull = wins / losses
+
+                winloss = round(winlossfull, 3)
+
+                kills = (oper.kills)
+                deaths = (oper.deaths)
+                if deaths == 0:
+                    killdeathfull = kills / 1
+
+                else:
+                    killdeathfull = kills / deaths
+
+                killdeath = round(killdeathfull, 3)
+                
+                time = str(datetime.timedelta(seconds=(oper.time_played)))
+                operator_badge = await auth.get_operator_badge(op)
+
+                embed = discord.Embed(colour=discord.Colour(0xf400ff))
+
+                embed.set_thumbnail(url=(operator_badge))
+                embed.set_author(name=""+(ign)+"\'s "+(opname)+" Stats on Playstation")
+                embed.set_footer(text="Combat Stats by @combat#7871")
+
+                embed.add_field(name="Wins", value=(wins), inline=True)
+                embed.add_field(name="Losses", value=(losses), inline=True)
+                embed.add_field(name="Win / Loss", value=(winloss), inline=True)
+                embed.add_field(name="Kills", value=(kills), inline=True)
+                embed.add_field(name="Deaths", value=(deaths), inline=True)
+                embed.add_field(name="Kill / Death", value=(killdeath), inline=True)
+                embed.add_field(name="Time Played (hh:mm:ss)", value=(time))
+
+                await ctx.send(embed=embed)
+                
+
+        
+        
+        
     async def run():
+        global auth
         auth = api.Auth("email", "password")
 
         player_batch = await auth.get_player_batch(names=[(username)], platform=api.Platforms.PLAYSTATION)
@@ -212,6 +371,9 @@ async def ps(ctx, username):
     
         
     asyncio.get_event_loop().run_until_complete(run())
+
+
+    
 
     
 client.run('token')
